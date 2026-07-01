@@ -1,29 +1,38 @@
-/* Nawwa Room - متغيرات التصميم */
-
+/* Nawwa Chat — متغيرات التصميم (أسود لامع احترافي) */
 :root {
-      --bg: #f5f4f0;
-      --surface: #ffffff;
-      --surface2: #f0efe9;
-      --border: #e8e6df;
-      --text-primary: #1a1917;
-      --text-secondary: #6b6760;
-      --text-muted: #a09d97;
-      --accent: #2d5be3;
-      --accent-light: #e8eefb;
-      --accent2: #e85d26;
-      --accent3: #2db87a;
-      --accent3-light: #e6f7f0;
-      --warning: #f0a500;
-      --warning-light: #fff8e6;
-      --danger: #ef4444;
-      --shadow-sm: 0 1px 3px rgba(0,0,0,0.06);
-      --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
-      --shadow-lg: 0 10px 30px rgba(0,0,0,0.1);
-      --radius: 16px;
-      --radius-sm: 10px;
-      --nav-h: 76px;
-      --font: 'IBM Plex Sans Arabic', sans-serif;
-      --mono: 'IBM Plex Sans Arabic', sans-serif;
-      --sidebar-width: 260px;
-      --max-width: 1200px;
-    }
+  --font: 'IBM Plex Sans Arabic', system-ui, sans-serif;
+
+  /* خلفية سوداء لامعة */
+  --bg-0: #050506;
+  --bg-1: #0b0c0e;
+  --bg-2: #131418;
+  --bg-3: #1b1c21;
+
+  /* أسطح زجاجية داكنة مع لمعان */
+  --glass: rgba(255, 255, 255, 0.045);
+  --glass-strong: rgba(255, 255, 255, 0.09);
+  --glass-border: rgba(255, 255, 255, 0.10);
+  --glass-hover: rgba(255, 255, 255, 0.07);
+  --sheen: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0) 42%);
+
+  /* نصوص */
+  --text: #f3f4f6;
+  --text-soft: rgba(243, 244, 246, 0.66);
+  --text-mute: rgba(243, 244, 246, 0.40);
+
+  /* فقاعات */
+  --bubble-them: rgba(255, 255, 255, 0.065);
+  --bubble-mine: linear-gradient(160deg, #1f8a52, #146c3d);
+
+  /* لون رئيسي (أخضر لامع) */
+  --accent: #24d16b;
+  --accent-strong: #1cae58;
+  --accent-ink: #05230f;
+  --danger: #ff5a5a;
+  --danger-strong: #e64545;
+
+  --radius: 22px;
+  --radius-sm: 14px;
+  --shadow: 0 24px 70px rgba(0, 0, 0, 0.6);
+  --shadow-soft: 0 8px 30px rgba(0, 0, 0, 0.45);
+}

@@ -1,7 +1,4 @@
-// ========== Nawwa Room: تهيئة Firebase (Auth + Firestore) ==========
-// هذه الوحدة (module) هي جسر بين Firebase و باقي ملفات السكربت الكلاسيكية.
-// تُنشئ مستمعات لحظية (onSnapshot) تملأ window._cache، فتبقى دوال العرض تعمل كما هي.
-
+// ========== Nawwa Chat: تهيئة Firebase (Auth + Firestore) ==========
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js";
 import {
   getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut,
@@ -26,7 +23,6 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-// كشف واجهة Firebase للسكربتات الكلاسيكية
 window.FB = {
   auth, db, collection, doc, setDoc, getDoc, updateDoc, deleteDoc,
   onSnapshot, query, where, arrayUnion, arrayRemove,
@@ -34,31 +30,27 @@ window.FB = {
   updateProfile, updateEmail, updatePassword, EmailAuthProvider, reauthenticateWithCredential
 };
 
-// ذاكرة محلية تُحدّث لحظيًا من Firestore (تحل محل localStorage للقراءة)
-window._cache = { nawwa_users: [], nawwa_rooms: [], nawwa_tasks: [], nawwa_chats: [] };
+// ذاكرة محلية تُحدّث لحظيًا
+window._cache = { nawwa_users: [], nawwa_chats: [] };
 
-// ========== دوال الكتابة (تُستدعى من السكربتات الكلاسيكية) ==========
-window.saveRoomDoc    = (room)    => setDoc(doc(db, 'rooms', room.id), room);
-window.deleteRoomDoc  = (id)      => deleteDoc(doc(db, 'rooms', id));
-window.saveTaskDoc    = (t)       => setDoc(doc(db, 'tasks', t.id), t);
-window.updateTaskDoc  = (id, d)   => updateDoc(doc(db, 'tasks', id), d);
-window.deleteTaskDoc  = (id)      => deleteDoc(doc(db, 'tasks', id));
+// دوال الكتابة
 window.saveChatDoc    = (c)       => setDoc(doc(db, 'chats', c.id), c);
 window.pushMessageDoc = (id, msg) => updateDoc(doc(db, 'chats', id), { messages: arrayUnion(msg) });
+window.updateChatDoc  = (id, d)   => updateDoc(doc(db, 'chats', id), d);
 window.updateUserDoc  = (id, d)   => updateDoc(doc(db, 'users', id), d);
+// مكالمات (إشارات الرنين)
+window.saveCallDoc    = (c)       => setDoc(doc(db, 'calls', c.id), c);
+window.updateCallDoc  = (id, d)   => updateDoc(doc(db, 'calls', id), d);
+// ملاحظات (خاصة بالمستخدم لكل محادثة)
+window.saveNoteDoc    = (id, d)   => setDoc(doc(db, 'notes', id), d);
+window.getNoteDoc     = async (id) => { try { const s = await getDoc(doc(db, 'notes', id)); return s.exists() ? s.data() : null; } catch (e) { console.warn(e); return null; } };
 
 // ========== المستمعات اللحظية ==========
 let unsubscribers = [];
 function clearListeners() { unsubscribers.forEach(u => u()); unsubscribers = []; }
-
-function safe(fn) { if (typeof window[fn] === 'function') { try { window[fn](...Array.prototype.slice.call(arguments, 1)); } catch (e) { console.warn(fn, e); } } }
-
-function refreshOpenRoom() {
-  // currentRoomId متغيّر عام (let) معرّف في rooms.js — تقرأه الوحدة بالاسم المجرّد
-  const rid = (typeof currentRoomId !== 'undefined') ? currentRoomId : null;
-  if (rid) {
-    const r = window._cache.nawwa_rooms.find(x => x.id === rid);
-    if (r) safe('openRoomDetail', r);
+function safe(fn) {
+  if (typeof window[fn] === 'function') {
+    try { window[fn](...Array.prototype.slice.call(arguments, 1)); } catch (e) { console.warn(fn, e); }
   }
 }
 
@@ -68,34 +60,11 @@ function startListeners(uid) {
   unsubscribers.push(onSnapshot(collection(db, 'users'), snap => {
     window._cache.nawwa_users = snap.docs.map(d => ({ id: d.id, ...d.data() }));
     if (window.currentUser) {
-      // مزامنة الدور/الاسم من ملف المستخدم الحقيقي (يحل تسابق التسجيل)
       const me = window._cache.nawwa_users.find(u => u.id === window.currentUser.id);
-      if (me) {
-        const changed = window.currentUser.role !== me.role || window.currentUser.name !== me.name;
-        window.currentUser.name = me.name;
-        window.currentUser.role = me.role;
-        safe('updateUI');
-        if (changed) safe('renderAll');
-      } else {
-        safe('updateUI');
-      }
+      if (me) { window.currentUser.name = me.name; }
+      safe('updateUI');
+      safe('updateChatPresence');
     }
-  }));
-
-  unsubscribers.push(onSnapshot(collection(db, 'rooms'), snap => {
-    window._cache.nawwa_rooms = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-    safe('renderRooms');
-    safe('updateTaskRoomSelect');
-    safe('renderTodayTasks');
-    safe('renderAllTasks');
-    refreshOpenRoom();
-  }));
-
-  unsubscribers.push(onSnapshot(collection(db, 'tasks'), snap => {
-    window._cache.nawwa_tasks = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-    safe('renderTodayTasks');
-    safe('renderAllTasks');
-    refreshOpenRoom();
   }));
 
   unsubscribers.push(onSnapshot(query(collection(db, 'chats'), where('members', 'array-contains', uid)), snap => {
@@ -104,12 +73,17 @@ function startListeners(uid) {
     const cid = (typeof currentChatId !== 'undefined') ? currentChatId : null;
     if (cid) {
       const c = window._cache.nawwa_chats.find(x => x.id === cid);
-      if (c) safe('renderChatMessages', c);
+      if (c) { safe('renderChatMessages', c); safe('updateChatPresence'); }
     }
+  }));
+
+  // مستمع المكالمات (الرنين)
+  unsubscribers.push(onSnapshot(query(collection(db, 'calls'), where('members', 'array-contains', uid)), snap => {
+    const calls = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    safe('onCallsUpdate', calls);
   }));
 }
 
-// ========== متابعة حالة تسجيل الدخول ==========
 onAuthStateChanged(auth, async (user) => {
   if (user) {
     let profile = {};
@@ -120,16 +94,15 @@ onAuthStateChanged(auth, async (user) => {
 
     window.currentUser = {
       id: user.uid,
-      name: profile.name || user.displayName || '',
-      email: user.email,
-      role: profile.role || 'طالب'
+      name: profile.name || user.displayName || (user.email || '').split('@')[0],
+      email: user.email
     };
     startListeners(user.uid);
     safe('launchApp');
   } else {
     window.currentUser = null;
     clearListeners();
-    window._cache = { nawwa_users: [], nawwa_rooms: [], nawwa_tasks: [], nawwa_chats: [] };
+    window._cache = { nawwa_users: [], nawwa_chats: [] };
     safe('showLoginScreen');
   }
 });

@@ -1,42 +1,80 @@
-// ========== Nawwa Room: الشات (تخزين محلي) ==========
-
+// ========== Nawwa Chat: المحادثات ==========
 let chats = [];
 let currentChatId = null;
 
 function loadChatsForUser() {
-  const allChats = getStore(STORE_KEYS.CHATS, []);
-  if (!currentUser) { chats = []; return; }
-  chats = allChats.filter(c => (c.members || []).includes(currentUser.id));
+  const all = getStore(STORE_KEYS.CHATS, []);
+  chats = currentUser ? all.filter(c => (c.members || []).includes(currentUser.id)) : [];
+  // ترتيب حسب آخر رسالة
+  chats.sort((a, b) => lastTime(b) - lastTime(a));
 }
 
+function lastTime(c) {
+  const m = c.messages && c.messages.length ? c.messages[c.messages.length - 1] : null;
+  return m ? new Date(m.sentAt).getTime() : new Date(c.createdAt || 0).getTime();
+}
+
+// الطرف الآخر في محادثة ثنائية
+function otherMemberIndex(c) {
+  return (c.members || []).findIndex(id => id !== currentUser.id);
+}
 function chatDisplayName(c) {
-  if (!c.memberNames) return c.title || 'محادثة';
-  const otherIdx = c.members.findIndex(id => id !== currentUser.id);
-  return otherIdx >= 0 ? c.memberNames[otherIdx] : (c.title || 'محادثة');
+  const idx = otherMemberIndex(c);
+  if (c.memberNames && idx >= 0 && c.memberNames[idx]) return c.memberNames[idx];
+  // احتياطيًا من دليل المستخدمين
+  const otherId = (c.members || [])[idx];
+  const u = getStore(STORE_KEYS.USERS, []).find(x => x.id === otherId);
+  return (u && u.name) || c.title || 'محادثة';
+}
+function chatSubtitle(c) {
+  const idx = otherMemberIndex(c);
+  const otherId = (c.members || [])[idx];
+  const u = getStore(STORE_KEYS.USERS, []).find(x => x.id === otherId);
+  return (u && u.email) || '';
+}
+
+function fmtTime(iso) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  return d.getHours().toString().padStart(2, '0') + ':' + d.getMinutes().toString().padStart(2, '0');
+}
+function dayLabel(iso) {
+  const d = new Date(iso); const now = new Date();
+  const strip = x => new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime();
+  const diff = (strip(now) - strip(d)) / 86400000;
+  if (diff === 0) return 'اليوم';
+  if (diff === 1) return 'أمس';
+  return d.toLocaleDateString('ar-EG', { day: 'numeric', month: 'long' });
 }
 
 function renderChatList() {
   loadChatsForUser();
   const list = $('chat-list-cont');
   if (!list) return;
+  const q = ($('conv-search') ? $('conv-search').value.trim().toLowerCase() : '');
+  const shown = chats.filter(c => !q || chatDisplayName(c).toLowerCase().includes(q));
+
   list.innerHTML = '';
-  if (!chats.length) {
-    list.innerHTML = `<div class="empty-state"><p>لا توجد محادثات بعد</p></div>`;
+  if (!shown.length) {
+    list.innerHTML = `<div class="empty-state">${q ? 'لا نتائج' : 'لا توجد محادثات بعد — أضف جهة اتصال للبدء'}</div>`;
     return;
   }
-  chats.forEach((c, idx) => {
+  shown.forEach(c => {
     const name = chatDisplayName(c);
-    const lastMsg = c.messages && c.messages.length ? c.messages[c.messages.length - 1].text : 'لا توجد رسائل بعد';
+    const msgs = c.messages || [];
+    const last = msgs.length ? msgs[msgs.length - 1] : null;
+    const lastTxt = last ? (last.senderId === currentUser.id ? 'أنت: ' + last.text : last.text) : 'ابدأ المحادثة';
     const item = document.createElement('div');
     item.className = 'chat-item' + (c.id === currentChatId ? ' active' : '');
     item.innerHTML = `
-      <div class="chat-av" style="background:${COLORS[idx % COLORS.length]};width:42px;height:42px;border-radius:50%;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;flex-shrink:0">${name.charAt(0)}</div>
-      <div style="flex:1;min-width:0">
-        <div style="font-size:14px;font-weight:600">${esc(name)}</div>
-        <div style="font-size:12px;color:var(--text-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(lastMsg)}</div>
-      </div>
-    `;
-    item.style.cssText += 'display:flex;align-items:center;gap:10px;padding:12px;cursor:pointer;border-radius:12px';
+      <div class="av" style="background:${colorFor(name)}">${esc(name.charAt(0).toUpperCase())}</div>
+      <div class="meta">
+        <div class="row1">
+          <span class="nm">${esc(name)}</span>
+          <span class="tm">${last ? fmtTime(last.sentAt) : ''}</span>
+        </div>
+        <div class="last">${esc(lastTxt)}</div>
+      </div>`;
     item.onclick = () => openChat(c.id);
     list.appendChild(item);
   });
@@ -48,35 +86,87 @@ function openChat(chatId) {
   const chat = chats.find(c => c.id === chatId);
   if (!chat) return;
   const name = chatDisplayName(chat);
-  $('win-name').textContent = name;
-  $('win-av').textContent = name.charAt(0);
-  $('win-av').style.background = COLORS[0];
-  $('chat-list-view').style.display = 'none';
-  $('chat-win-view').style.display = 'flex';
+
+  setText('win-name', name);
+  const av = $('win-av');
+  av.textContent = name.charAt(0).toUpperCase();
+  av.style.background = colorFor(name);
+
+  $('chat-empty').style.display = 'none';
+  $('chat-window').style.display = 'flex';
+
+  // الجوال: أظهر لوحة المحادثة وأخفِ القائمة
+  $('conv-panel').classList.add('hidden-mobile');
+  $('chat-panel').classList.remove('hidden-mobile');
+
   renderChatMessages(chat);
+  updateChatPresence();
+  markRead(chat.id);
+  renderChatList();
+  setTimeout(() => $('chat-inp') && $('chat-inp').focus(), 50);
 }
 
 function closeChatWin() {
-  $('chat-win-view').style.display = 'none';
-  $('chat-list-view').style.display = 'block';
   currentChatId = null;
+  $('chat-window').style.display = 'none';
+  $('chat-empty').style.display = 'flex';
+  $('conv-panel').classList.remove('hidden-mobile');
+  $('chat-panel').classList.add('hidden-mobile');
   renderChatList();
+}
+
+function toMs(v) { if (!v) return 0; return typeof v === 'number' ? v : (Date.parse(v) || 0); }
+
+function isOtherTyping(chat) {
+  const idx = otherMemberIndex(chat);
+  const otherId = (chat.members || [])[idx];
+  const ts = chat.typing ? toMs(chat.typing[otherId]) : 0;
+  return ts > 0 && (Date.now() - ts) < 4000;
 }
 
 function renderChatMessages(chat) {
   const box = $('chat-msgs');
   if (!box) return;
+  const msgs = chat.messages || [];
+  const idx = otherMemberIndex(chat);
+  const otherId = (chat.members || [])[idx];
+  const otherRead = chat.reads ? toMs(chat.reads[otherId]) : 0;
+  let lastMineIdx = -1;
+  msgs.forEach((m, i) => { if (m.senderId === currentUser.id) lastMineIdx = i; });
+
   box.innerHTML = '';
-  (chat.messages || []).forEach(m => {
+  let lastDay = '';
+  msgs.forEach((m, i) => {
+    const dl = dayLabel(m.sentAt);
+    if (dl !== lastDay) {
+      lastDay = dl;
+      const sep = document.createElement('div');
+      sep.className = 'day-sep';
+      sep.textContent = dl;
+      box.appendChild(sep);
+    }
     const mine = m.senderId === currentUser.id;
-    const bubble = document.createElement('div');
-    bubble.style.cssText = `max-width:75%;padding:9px 13px;border-radius:14px;margin-bottom:8px;font-size:14px;align-self:${mine ? 'flex-end' : 'flex-start'};background:${mine ? 'var(--accent)' : 'var(--surface2)'};color:${mine ? '#fff' : 'var(--text-primary)'};`;
-    bubble.textContent = m.text;
-    box.appendChild(bubble);
+    const b = document.createElement('div');
+    b.className = 'msg ' + (mine ? 'mine' : 'them');
+    let rc = '';
+    if (mine && i === lastMineIdx) {
+      const seen = otherRead >= new Date(m.sentAt).getTime();
+      rc = `<span class="rc ${seen ? 'seen' : ''}">${seen ? '✓✓ تم المشاهدة' : '✓ تم الإرسال'}</span>`;
+    }
+    b.innerHTML = `${esc(m.text)}<span class="t">${fmtTime(m.sentAt)}${rc}</span>`;
+    box.appendChild(b);
   });
-  box.style.display = 'flex';
-  box.style.flexDirection = 'column';
+
+  if (isOtherTyping(chat)) {
+    const tb = document.createElement('div');
+    tb.className = 'typing-bubble';
+    tb.innerHTML = '<span></span><span></span><span></span>';
+    box.appendChild(tb);
+  }
   box.scrollTop = box.scrollHeight;
+
+  // علِّم كمقروء عند وصول رسالة جديدة والمحادثة مفتوحة
+  if (chat.id === currentChatId) markRead(chat.id);
 }
 
 async function sendMsg() {
@@ -85,6 +175,7 @@ async function sendMsg() {
   if (!text || !currentChatId) return;
   const chatId = currentChatId;
   input.value = '';
+  clearTyping(chatId);
   const msg = { senderId: currentUser.id, text, sentAt: new Date().toISOString() };
   try {
     await pushMessageDoc(chatId, msg); // العرض يتحدّث لحظيًا عبر onSnapshot
@@ -94,23 +185,78 @@ async function sendMsg() {
   }
 }
 
-// إدراج محادثة في الذاكرة تفاؤليًا حتى يصل تحديث onSnapshot
+// ---------- الحضور / الكتابة / القراءة ----------
+function updateChatPresence() {
+  if (!currentChatId) return;
+  const chat = getStore(STORE_KEYS.CHATS, []).find(c => c.id === currentChatId);
+  const sub = $('win-sub');
+  if (!chat || !sub) return;
+  sub.classList.remove('online', 'offline', 'typing');
+
+  if (isOtherTyping(chat)) { sub.textContent = 'يكتب…'; sub.classList.add('typing'); return; }
+
+  const idx = otherMemberIndex(chat);
+  const otherId = (chat.members || [])[idx];
+  const u = getStore(STORE_KEYS.USERS, []).find(x => x.id === otherId);
+  const la = u ? toMs(u.lastActive) : 0;
+  if (la && (Date.now() - la) < 45000) { sub.textContent = 'متصل'; sub.classList.add('online'); }
+  else if (la) { sub.textContent = 'آخر ظهور ' + fmtTime(new Date(la).toISOString()); sub.classList.add('offline'); }
+  else { sub.textContent = chatSubtitle(chat); sub.classList.add('offline'); }
+}
+
+let _typingLastWrite = 0, _typingClearT = null;
+function onTyping() {
+  if (!currentChatId) return;
+  const now = Date.now();
+  if (now - _typingLastWrite > 2000) {
+    _typingLastWrite = now;
+    updateChatDoc(currentChatId, { ['typing.' + currentUser.id]: now }).catch(() => {});
+  }
+  if (_typingClearT) clearTimeout(_typingClearT);
+  _typingClearT = setTimeout(() => clearTyping(currentChatId), 3500);
+}
+function clearTyping(chatId) {
+  if (_typingClearT) { clearTimeout(_typingClearT); _typingClearT = null; }
+  _typingLastWrite = 0;
+  if (chatId) updateChatDoc(chatId, { ['typing.' + currentUser.id]: 0 }).catch(() => {});
+}
+
+function markRead(chatId) {
+  const chat = getStore(STORE_KEYS.CHATS, []).find(c => c.id === chatId);
+  if (!chat) return;
+  const msgs = chat.messages || [];
+  const last = msgs.length ? msgs[msgs.length - 1] : null;
+  if (!last || last.senderId === currentUser.id) return;      // لا شيء جديد من الطرف الآخر
+  const myRead = chat.reads ? toMs(chat.reads[currentUser.id]) : 0;
+  if (myRead >= new Date(last.sentAt).getTime()) return;      // مقروءة أصلًا (يمنع حلقة الكتابة)
+  updateChatDoc(chatId, { ['reads.' + currentUser.id]: Date.now() }).catch(() => {});
+}
+
+// نبض الحضور
+function startPresence() {
+  const beat = () => { if (currentUser) updateUserDoc(currentUser.id, { lastActive: Date.now() }).catch(() => {}); };
+  beat();
+  if (window._presenceTimer) clearInterval(window._presenceTimer);
+  window._presenceTimer = setInterval(beat, 25000);
+  if (window._presenceUiTimer) clearInterval(window._presenceUiTimer);
+  window._presenceUiTimer = setInterval(updateChatPresence, 15000);
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) beat(); });
+}
+
 function cacheChat(chat) {
   const arr = getStore(STORE_KEYS.CHATS, []);
   if (!arr.some(c => c.id === chat.id)) arr.push(chat);
 }
 
 async function createChat() {
-  const email = $('nc-email').value.trim();
-  if (!email) return showToast('أدخل بريد المستخدم');
-  const users = getStore(STORE_KEYS.USERS, []);
-  const other = users.find(u => u.email === email);
+  const email = $('nc-email').value.trim().toLowerCase();
+  if (!email) return showToast('أدخل بريد الشخص');
+  const other = getStore(STORE_KEYS.USERS, []).find(u => (u.email || '').toLowerCase() === email);
   if (!other) return showToast('لا يوجد مستخدم بهذا البريد');
   if (other.id === currentUser.id) return showToast('لا يمكنك مراسلة نفسك');
 
-  const allChats = getStore(STORE_KEYS.CHATS, []);
-  let existing = allChats.find(c =>
-    c.members.includes(currentUser.id) && c.members.includes(other.id) && c.members.length === 2
+  let existing = getStore(STORE_KEYS.CHATS, []).find(c =>
+    (c.members || []).includes(currentUser.id) && c.members.includes(other.id) && c.members.length === 2
   );
   if (!existing) {
     existing = {
@@ -126,36 +272,5 @@ async function createChat() {
   }
   $('nc-email').value = '';
   closeModalById('mo-chat');
-  setPage('chat');
-  openChat(existing.id);
-}
-
-async function openRoomChat(room) {
-  if (isTeacher()) {
-    setPage('chat');
-    showToast('اختر طالبًا من قائمة المحادثات لمراسلته');
-    return;
-  }
-  const users = getStore(STORE_KEYS.USERS, []);
-  const teacher = users.find(u => u.id === room.teacherId);
-  if (!teacher) return showToast('تعذر العثور على الأستاذ');
-  const allChats = getStore(STORE_KEYS.CHATS, []);
-  let existing = allChats.find(c =>
-    c.members.includes(currentUser.id) && c.members.includes(teacher.id) && c.members.length === 2
-  );
-  if (!existing) {
-    existing = {
-      id: uid('chat'),
-      members: [currentUser.id, teacher.id],
-      memberNames: [currentUser.name, teacher.name],
-      title: teacher.name,
-      roomId: room.id,
-      messages: [],
-      createdAt: new Date().toISOString()
-    };
-    try { await saveChatDoc(existing); } catch (e) { console.error(e); return showToast('تعذّر إنشاء المحادثة'); }
-    cacheChat(existing);
-  }
-  setPage('chat');
   openChat(existing.id);
 }
