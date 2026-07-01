@@ -1,0 +1,29 @@
+/* Nawwa Room - متغيرات التصميم */
+
+:root {
+      --bg: #f5f4f0;
+      --surface: #ffffff;
+      --surface2: #f0efe9;
+      --border: #e8e6df;
+      --text-primary: #1a1917;
+      --text-secondary: #6b6760;
+      --text-muted: #a09d97;
+      --accent: #2d5be3;
+      --accent-light: #e8eefb;
+      --accent2: #e85d26;
+      --accent3: #2db87a;
+      --accent3-light: #e6f7f0;
+      --warning: #f0a500;
+      --warning-light: #fff8e6;
+      --danger: #ef4444;
+      --shadow-sm: 0 1px 3px rgba(0,0,0,0.06);
+      --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
+      --shadow-lg: 0 10px 30px rgba(0,0,0,0.1);
+      --radius: 16px;
+      --radius-sm: 10px;
+      --nav-h: 76px;
+      --font: 'IBM Plex Sans Arabic', sans-serif;
+      --mono: 'IBM Plex Sans Arabic', sans-serif;
+      --sidebar-width: 260px;
+      --max-width: 1200px;
+    }

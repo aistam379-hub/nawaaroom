@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nawwa Room | نوّاة روم</title>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <!-- ========== شاشة الدخول ========== -->
+  <div id="login-screen">
+    <div class="login-card">
+      <div class="login-logo">
+        <div class="login-logo-mark">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+            <circle cx="12" cy="12" r="4" fill="white" />
+            <circle cx="12" cy="12" r="9" stroke="white" stroke-width="2" fill="none" />
+          </svg>
+        </div>
+        <div class="login-brand-ar">Nawwa Room</div>
+        <div class="login-brand-en">Nawwa Room</div>
+      </div>
+
+      <!-- نموذج تسجيل الدخول -->
+      <div id="login-form">
+        <div class="login-title">مرحباً بك</div>
+        <div class="login-sub">سجّل دخولك للمتابعة</div>
+        <div class="login-field">
+          <label class="login-label">البريد الإلكتروني</label>
+          <input class="login-input" id="li-email" type="email" placeholder="أدخل بريدك الإلكتروني" onkeypress="if(event.key==='Enter') doLogin()">
+          <div class="login-error" id="li-err-email"></div>
+        </div>
+        <div class="login-field">
+          <label class="login-label">كلمة المرور</label>
+          <input class="login-input" id="li-pass" type="password" placeholder="أدخل كلمة المرور" onkeypress="if(event.key==='Enter') doLogin()">
+          <div class="login-error" id="li-err-pass"></div>
+        </div>
+        <button class="login-btn" onclick="doLogin()">تسجيل الدخول</button>
+        <div class="login-divider"><span>أو</span></div>
+        <div class="switch-link">ليس لديك حساب؟ <button onclick="showReg()">إنشاء حساب جديد</button></div>
+      </div>
+
+      <!-- نموذج إنشاء حساب -->
+      <div id="reg-form" style="display:none">
+        <div class="login-title">إنشاء حساب</div>
+        <div class="login-sub">انضم إلى Nawwa Room اليوم</div>
+        <div class="login-field">
+          <label class="login-label">الاسم الكامل</label>
+          <input class="login-input" id="rg-name" type="text" placeholder="مثال: أحمد السالم">
+          <div class="login-error" id="rg-err-name"></div>
+        </div>
+        <div class="login-field">
+          <label class="login-label">الدور</label>
+          <select class="login-input" id="rg-role">
+            <option value="">اختر الدور</option>
+            <option value="استاذ">أستاذ</option>
+            <option value="طالب">طالب</option>
+          </select>
+        </div>
+        <div class="login-field">
+          <label class="login-label">البريد الإلكتروني</label>
+          <input class="login-input" id="rg-email" type="email" placeholder="سيستخدم لتسجيل الدخول">
+          <div class="login-error" id="rg-err-email"></div>
+        </div>
+        <div class="login-field">
+          <label class="login-label">كلمة المرور</label>
+          <input class="login-input" id="rg-pass" type="password" placeholder="8 أحرف على الأقل" oninput="checkStrength(this.value, 'rg-strength')">
+          <div class="pass-strength"><div class="pass-strength-fill" id="rg-strength"></div></div>
+          <div class="login-error" id="rg-err-pass"></div>
+        </div>
+        <button class="login-btn" onclick="doRegister()">إنشاء الحساب</button>
+        <div class="login-divider"><span>أو</span></div>
+        <div class="switch-link">لديك حساب؟ <button onclick="showLogin()">تسجيل الدخول</button></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== التطبيق الرئيسي ========== -->
+  <div id="app" style="display:none;">
+    <div class="app">
+      <!-- سايدبار (يظهر فقط على الشاشات الكبيرة) -->
+      <aside class="sidebar">
+        <div class="sb-logo">
+          <div class="sb-logo-mark">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+              <circle cx="12" cy="12" r="4" fill="white" />
+              <circle cx="12" cy="12" r="9" stroke="white" stroke-width="2" fill="none" />
+            </svg>
+          </div>
+          <div class="sb-brand-ar">Nawwa Room</div>
+          <div class="sb-brand-en">Nawwa Room</div>
+        </div>
+        <nav class="sb-nav">
+          <button class="sb-item active" onclick="setPage('rooms')">
+            <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+            الغرف
+          </button>
+          <button class="sb-item" onclick="setPage('tasks')">
+            <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+            الواجبات
+          </button>
+          <button class="sb-item" onclick="setPage('chat')">
+            <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+            المحادثات
+          </button>
+          <button class="sb-item" onclick="setPage('settings')">
+            <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+            الإعدادات
+          </button>
+        </nav>
+        <div class="sb-user">
+          <div class="sb-av" id="sb-av">أ</div>
+          <div>
+            <div class="sb-uname" id="sb-name">—</div>
+            <div class="sb-urole" id="sb-role">—</div>
+          </div>
+        </div>
+      </aside>
+
+      <!-- المحتوى الرئيسي -->
+      <div class="main">
+        <header class="topbar">
+          <div class="tb-logo">
+            <div class="logo-mark">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                <circle cx="12" cy="12" r="4" fill="white" />
+                <circle cx="12" cy="12" r="9" stroke="white" stroke-width="2" fill="none" />
+              </svg>
+            </div>
+            <div>
+              <div class="logo-ar">Nawwa Room</div>
+              <div class="logo-en">Nawwa Room</div>
+            </div>
+          </div>
+          <div class="tb-right">
+            <div class="tb-time">
+              <span class="tv" id="clock">--:--</span>
+              <span id="date-lbl" style="font-size:11px">...</span>
+            </div>
+            <button class="notif-btn" onclick="showToast('لا توجد إشعارات جديدة')">
+              <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+            </button>
+            <button class="av-btn" id="tb-av" onclick="setPage('settings')">أ</button>
+          </div>
+        </header>
+
+        <div class="pages">
+          <!-- صفحة الغرف -->
+          <div class="page active" id="page-rooms">
+            <div class="page-header">
+              <div>
+                <div class="page-title">الغرف</div>
+                <div class="page-subtitle" id="rooms-greet">مرحباً!</div>
+              </div>
+              <button class="btn-primary teacher-only" onclick="openModal('mo-room')">
+                <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+                غرفة جديدة
+              </button>
+            </div>
+
+            <!-- التقويم المحسّن -->
+            <div class="cal-header">
+              <div class="month-nav">
+                <button class="btn-icon" onclick="changeMonth(-1)">
+                  <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>
+                </button>
+                <span class="month-btn" id="current-month">مارس 2026</span>
+                <button class="btn-icon" onclick="changeMonth(1)">
+                  <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
+                </button>
+              </div>
+              <button class="btn-icon" onclick="buildCalendar(new Date())">
+                <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              </button>
+            </div>
+            <div class="cal-strip" id="cal-strip"></div>
+
+            <div class="stats-row">
+              <div class="stat-card"><div class="stat-val" id="st-rooms">0</div><div class="stat-label">غرف</div></div>
+              <div class="stat-card"><div class="stat-val" id="st-students">0</div><div class="stat-label">طلاب</div></div>
+              <div class="stat-card"><div class="stat-val" id="st-live">0</div><div class="stat-label">حصص جارية</div></div>
+            </div>
+
+            <div class="section">
+              <div class="sec-hdr">
+                <span class="pinned-badge">
+                  <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/></svg>
+                  غرفي
+                </span>
+                <button class="sec-link">عرض الكل ›</button>
+              </div>
+              <div class="projects-grid" id="rooms-grid"></div>
+              <div id="rooms-empty" class="empty-state" style="display:none">
+                <svg width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
+                <p>لا توجد غرف بعد</p>
+                <span>اضغط "غرفة جديدة" للبدء</span>
+              </div>
+            </div>
+
+            <div class="section" style="margin-top:8px">
+              <div class="sec-hdr">
+                <div style="display:flex; align-items:center; gap:8px">
+                  <span class="sec-title">مهام اليوم</span>
+                  <span id="today-cnt" style="background:var(--accent); color:#fff; border-radius:99px; padding:1px 8px; font-size:11px; font-weight:700">0</span>
+                </div>
+                <button class="btn-icon" onclick="openModal('mo-task')">
+                  <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+                </button>
+              </div>
+              <div class="task-list" id="today-tasks"></div>
+            </div>
+            <div style="height:24px"></div>
+          </div>
+
+          <!-- صفحة الواجبات -->
+          <div class="page" id="page-tasks">
+            <div class="page-header">
+              <div>
+                <div class="page-title">الواجبات</div>
+                <div class="page-subtitle">جميع مهامك</div>
+              </div>
+              <button class="btn-primary" onclick="openModal('mo-task')">
+                <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+                إضافة مهمة
+              </button>
+            </div>
+            <div class="search-bar">
+              <svg class="search-icon" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+              <input type="text" placeholder="بحث في الواجبات..." oninput="filterTasks(this.value)">
+            </div>
+            <div class="tab-filter">
+              <button class="tab-pill active" onclick="setFilter('all', this)">الكل</button>
+              <button class="tab-pill" onclick="setFilter('open', this)">مفتوحة</button>
+              <button class="tab-pill" onclick="setFilter('progress', this)">جارٍ العمل</button>
+              <button class="tab-pill" onclick="setFilter('done', this)">مكتملة</button>
+            </div>
+            <div class="task-list" style="padding:0 20px" id="all-tasks"></div>
+            <div style="height:24px"></div>
+          </div>
+
+          <!-- صفحة المحادثات -->
+          <div class="page" id="page-chat">
+            <div id="chat-list-view">
+              <div class="page-header">
+                <div>
+                  <div class="page-title">المحادثات</div>
+                  <div class="page-subtitle">تواصل مع فريقك</div>
+                </div>
+                <button class="btn-primary" onclick="openModal('mo-chat')">
+                  <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+                  محادثة
+                </button>
+              </div>
+              <div class="search-bar">
+                <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+                <input type="text" placeholder="بحث...">
+              </div>
+              <div class="chat-list-c" id="chat-list-cont"></div>
+            </div>
+            <div id="chat-win-view" style="display:none; flex-direction:column; height:calc(100vh - 56px - var(--nav-h))">
+              <div class="chat-win-hdr">
+                <button class="btn-icon" onclick="closeChatWin()">
+                  <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+                </button>
+                <div class="chat-av" id="win-av" style="width:36px; height:36px; border-radius:50%; font-size:14px; font-weight:700; color:#fff; display:flex; align-items:center; justify-content:center"></div>
+                <div style="flex:1">
+                  <div style="font-size:14px; font-weight:600" id="win-name"></div>
+                  <div style="font-size:11px; color:var(--accent3); font-weight:500">متاح</div>
+                </div>
+              </div>
+              <div class="chat-msgs" id="chat-msgs"></div>
+              <div class="chat-input-area">
+                <button class="chat-attach" onclick="showToast('إرفاق ملف')">
+                  <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg>
+                </button>
+                <input class="chat-input" id="chat-inp" type="text" placeholder="اكتب رسالة..." onkeypress="if(event.key==='Enter') sendMsg()">
+                <button class="chat-send" onclick="sendMsg()">
+                  <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22,2 15,22 11,13 2,9"/></svg>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- صفحة الإعدادات -->
+          <div class="page" id="page-settings">
+            <div class="page-header">
+              <div>
+                <div class="page-title">الإعدادات</div>
+                <div class="page-subtitle">تخصيص حسابك</div>
+              </div>
+            </div>
+            <div class="prof-card">
+              <div class="prof-av" id="prof-av" onclick="document.getElementById('av-upload').click()" title="اضغط لتغيير الصورة">
+                <span id="prof-av-inner">أ</span>
+                <div class="prof-av-edit">
+                  <svg width="9" height="9" fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                </div>
+              </div>
+              <input type="file" id="av-upload" accept="image/*" style="display:none" onchange="handleAvatar(event)">
+              <div class="prof-info">
+                <div class="prof-name" id="prof-name-d">—</div>
+                <div class="prof-role" id="prof-role-d">—</div>
+                <div class="prof-badge">
+                  <svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                  عضو Nawwa Room
+                </div>
+              </div>
+            </div>
+
+            <div class="set-sec-lbl">معلومات الحساب</div>
+            <div class="set-card">
+              <div class="set-item" onclick="openModal('mo-ename')">
+                <div class="set-icon" style="background:#e8eefb">
+                  <svg width="16" height="16" fill="none" stroke="var(--accent)" stroke-width="2" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                </div>
+                <div class="set-body">
+                  <div class="set-label">الاسم والمسمى الوظيفي</div>
+                  <div class="set-desc" id="set-name-prev">—</div>
+                </div>
+                <svg class="chevron" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>
+              </div>
+              <div class="set-item" onclick="openModal('mo-euser')">
+                <div class="set-icon" style="background:#fff8e6">
+                  <svg width="16" height="16" fill="none" stroke="var(--warning)" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+                </div>
+                <div class="set-body">
+                  <div class="set-label">البريد الإلكتروني</div>
+                  <div class="set-desc" id="set-email-prev">—</div>
+                </div>
+                <svg class="chevron" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>
+              </div>
+              <div class="set-item" onclick="openModal('mo-epass')">
+                <div class="set-icon" style="background:#feebed">
+                  <svg width="16" height="16" fill="none" stroke="var(--danger)" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+                </div>
+                <div class="set-body">
+                  <div class="set-label">تغيير كلمة المرور</div>
+                  <div class="set-desc">••••••••</div>
+                </div>
+                <svg class="chevron" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>
+              </div>
+            </div>
+
+            <div class="set-sec-lbl">الإشعارات</div>
+            <div class="set-card">
+              <div class="set-item">
+                <div class="set-icon" style="background:#e6f7f0">
+                  <svg width="16" height="16" fill="none" stroke="var(--accent3)" stroke-width="2" viewBox="0 0 24 24"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+                </div>
+                <div class="set-body">
+                  <div class="set-label">الإشعارات الفورية</div>
+                  <div class="set-desc">تنبيهات الواجبات والغرف</div>
+                </div>
+                <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+              </div>
+              <div class="set-item">
+                <div class="set-icon" style="background:#e8eefb">
+                  <svg width="16" height="16" fill="none" stroke="var(--accent)" stroke-width="2" viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                </div>
+                <div class="set-body">
+                  <div class="set-label">إشعارات البريد</div>
+                  <div class="set-desc">ملخص يومي وأسبوعي</div>
+                </div>
+                <div class="toggle" onclick="this.classList.toggle('on')"></div>
+              </div>
+            </div>
+
+            <div style="padding:0 20px 32px">
+              <button style="width:100%; padding:14px; background:none; border:1.5px solid #fca5a5; border-radius:12px; font-family:var(--font); font-size:14px; font-weight:600; color:var(--danger); cursor:pointer; transition:all 0.2s" onclick="doLogout()" onmouseover="this.style.background='#fef2f2'" onmouseout="this.style.background='none'">
+                تسجيل الخروج
+              </button>
+            </div>
+          </div>
+
+          <!-- صفحة تفاصيل المشروع -->
+          <div class="page" id="page-detail">
+            <div class="detail-hdr">
+              <button class="detail-back" onclick="closeDetail()">
+                <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+                الغرف
+              </button>
+              <div class="detail-title" id="dt-title"></div>
+              <div class="detail-meta-row">
+                <div class="dmc">
+                  <div class="dml">تاريخ الإنشاء</div>
+                  <div class="dmv" id="dt-created"></div>
+                </div>
+                <div class="dmc">
+                  <div class="dml">موعد الحصة</div>
+                  <div class="dmv" id="dt-due"></div>
+                </div>
+              </div>
+              <p id="dt-desc" style="margin:10px 0 0; color:var(--text-secondary); font-size:14px"></p>
+            </div>
+
+            <!-- مساحة المكالمة المباشرة (Jitsi) -->
+            <div class="file-section">
+              <div class="file-header">
+                <span class="sec-title">المكالمة المباشرة</span>
+                <div style="display:flex;gap:8px">
+                  <button class="btn-primary" id="dt-call-btn" onclick="startJitsiCall('')">ابدأ الحصة</button>
+                  <button class="btn-cancel" onclick="endJitsiCall()" style="padding:8px 14px;border-radius:10px;font-size:13px">إنهاء</button>
+                </div>
+              </div>
+              <div id="jitsi-container" style="width:100%; height:380px; background:var(--surface2); border:1px solid var(--border); border-radius:14px; overflow:hidden"></div>
+            </div>
+
+            <!-- إدارة الطلاب (أستاذ فقط) -->
+            <div class="file-section teacher-only">
+              <div class="file-header">
+                <span class="sec-title">طلاب الغرفة</span>
+              </div>
+              <div style="display:flex; gap:8px; padding:0 20px 12px">
+                <input class="f-input" id="add-student-email" type="email" placeholder="بريد الطالب الإلكتروني" style="flex:1">
+                <button class="btn-primary" onclick="addStudentToRoom()">إضافة</button>
+              </div>
+              <div id="room-students-list" class="file-grid"></div>
+            </div>
+
+            <!-- واجبات هذه الغرفة -->
+            <div class="task-table">
+              <div class="task-table-hdr">
+                <span>#</span>
+                <span>الواجب</span>
+                <span>الحالة</span>
+              </div>
+              <div id="dt-rows"></div>
+            </div>
+            <div style="padding:16px 20px" class="teacher-only">
+              <button class="btn-primary" style="width:100%; justify-content:center" onclick="openModal('mo-task')">
+                <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+                إضافة واجب لهذه الغرفة
+              </button>
+            </div>
+            <div style="height:24px"></div>
+          </div>
+        </div><!-- /.pages -->
+      </div><!-- /.main -->
+
+      <!-- القائمة السفلية (موبايل) -->
+
+      <nav class="bottom-nav">
+        <button class="nav-btn active" id="nav-rooms" onclick="setPage('rooms')">
+          <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+          <span class="nav-label">مشاريع</span>
+        </button>
+        <button class="nav-btn" id="nav-tasks" onclick="setPage('tasks')">
+          <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+          <span class="nav-label">مهام</span>
+        </button>
+        <button class="nav-add" onclick="openAddModal()">
+          <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+        </button>
+        <button class="nav-btn" id="nav-chat" onclick="setPage('chat')">
+          <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+          <span class="nav-label">محادثات</span>
+        </button>
+        <button class="nav-btn" id="nav-settings" onclick="setPage('settings')">
+          <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+          <span class="nav-label">إعدادات</span>
+        </button>
+      </nav>
+    </div><!-- /.app -->
+  </div><!-- /#app -->
+
+  <!-- ========== النوافذ المنبثقة (مودالات) ========== -->
+  <!-- غرفة جديدة -->
+  <div class="modal-overlay" id="mo-room" onclick="closeModal(event, 'mo-room')">
+    <div class="modal-sheet">
+      <div class="modal-handle"></div>
+      <div class="modal-title">غرفة جديدة</div>
+      <div class="f-field">
+        <label class="f-label">اسم الغرفة</label>
+        <input class="f-input" id="np-name" type="text" placeholder="مثال: غرفة الرياضيات - الصف العاشر">
+      </div>
+      <div class="f-field">
+        <label class="f-label">موعد الحصة (اختياري)</label>
+        <input class="f-input" id="np-schedule" type="datetime-local">
+      </div>
+      <div class="f-field">
+        <label class="f-label">وصف (اختياري)</label>
+        <input class="f-input" id="np-desc" type="text" placeholder="وصف مختصر...">
+      </div>
+      <div class="f-actions">
+        <button class="btn-cancel" onclick="closeModalById('mo-room')">إلغاء</button>
+        <button class="btn-submit" onclick="addRoom()">إضافة</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- واجب جديد -->
+  <div class="modal-overlay" id="mo-task" onclick="closeModal(event, 'mo-task')">
+    <div class="modal-sheet">
+      <div class="modal-handle"></div>
+      <div class="modal-title">واجب جديد</div>
+      <div class="f-field">
+        <label class="f-label">عنوان الواجب</label>
+        <input class="f-input" id="nt-title" type="text" placeholder="مثال: حل تمارين الفصل الثالث">
+      </div>
+      <div class="f-field">
+        <label class="f-label">الغرفة</label>
+        <select class="f-input" id="nt-room">
+          <option value="">اختر الغرفة</option>
+        </select>
+      </div>
+      <div class="f-field">
+        <label class="f-label">الوصف</label>
+        <input class="f-input" id="nt-desc" type="text" placeholder="وصف مختصر...">
+      </div>
+      <div class="f-field">
+        <label class="f-label">تاريخ التسليم</label>
+        <input class="f-input" id="nt-due" type="date">
+      </div>
+      <div class="f-actions">
+        <button class="btn-cancel" onclick="closeModalById('mo-task')">إلغاء</button>
+        <button class="btn-submit" onclick="addTask()">إضافة</button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- محادثة جديدة -->
+  <div class="modal-overlay" id="mo-chat" onclick="closeModal(event, 'mo-chat')">
+    <div class="modal-sheet">
+      <div class="modal-handle"></div>
+      <div class="modal-title">محادثة جديدة</div>
+      <div class="f-field">
+        <label class="f-label">البريد الإلكتروني للشخص</label>
+        <input class="f-input" id="nc-email" type="email" placeholder="example@email.com">
+      </div>
+      <div class="f-actions">
+        <button class="btn-cancel" onclick="closeModalById('mo-chat')">إلغاء</button>
+        <button class="btn-submit" onclick="createChat()">بدء</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- تعديل الاسم -->
+  <div class="modal-overlay" id="mo-ename" onclick="closeModal(event, 'mo-ename')">
+    <div class="modal-sheet">
+      <div class="modal-handle"></div>
+      <div class="modal-title">تعديل الاسم</div>
+      <div class="f-field">
+        <label class="f-label">الاسم الكامل</label>
+        <input class="f-input" id="en-name" type="text">
+      </div>
+      <div class="f-field">
+        <label class="f-label">المسمى الوظيفي</label>
+        <input class="f-input" id="en-role" type="text">
+      </div>
+      <div class="f-actions">
+        <button class="btn-cancel" onclick="closeModalById('mo-ename')">إلغاء</button>
+        <button class="btn-submit" onclick="saveName()">حفظ</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- تعديل البريد الإلكتروني -->
+  <div class="modal-overlay" id="mo-euser" onclick="closeModal(event, 'mo-euser')">
+    <div class="modal-sheet">
+      <div class="modal-handle"></div>
+      <div class="modal-title">تغيير البريد الإلكتروني</div>
+      <div class="f-field">
+        <label class="f-label">البريد الإلكتروني الجديد</label>
+        <input class="f-input" id="eu-email" type="email">
+      </div>
+      <div class="f-actions">
+        <button class="btn-cancel" onclick="closeModalById('mo-euser')">إلغاء</button>
+        <button class="btn-submit" onclick="saveEmail()">حفظ</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- تعديل كلمة المرور -->
+  <div class="modal-overlay" id="mo-epass" onclick="closeModal(event, 'mo-epass')">
+    <div class="modal-sheet">
+      <div class="modal-handle"></div>
+      <div class="modal-title">تغيير كلمة المرور</div>
+      <div class="f-field">
+        <label class="f-label">كلمة المرور الحالية</label>
+        <input class="f-input" id="ep-old" type="password" placeholder="••••••••">
+      </div>
+      <div class="f-field">
+        <label class="f-label">كلمة المرور الجديدة</label>
+        <input class="f-input" id="ep-new" type="password" placeholder="8 أحرف على الأقل" oninput="checkStrength(this.value, 'ep-str')">
+        <div class="pass-strength"><div class="pass-strength-fill" id="ep-str"></div></div>
+      </div>
+      <div class="f-field">
+        <label class="f-label">تأكيد كلمة المرور</label>
+        <input class="f-input" id="ep-conf" type="password" placeholder="أعد الكتابة">
+      </div>
+      <div class="f-actions">
+        <button class="btn-cancel" onclick="closeModalById('mo-epass')">إلغاء</button>
+        <button class="btn-submit" onclick="savePassword()">تغيير</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+
+  <!-- Jitsi Meet External API -->
+  <script src="https://meet.jit.si/external_api.js"></script>
+
+  <!-- ===== Firebase (وحدة ESM: تُهيّئ Auth + Firestore وتضبط window.FB) ===== -->
+  <script type="module" src="js/firebase-init.js"></script>
+
+  <!-- ===== ملفات JavaScript ===== -->
+  <script src="js/storage.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/rooms.js"></script>
+  <script src="js/assignments.js"></script>
+  <script src="js/chat.js"></script>
+  <script src="js/jitsi.js"></script>
+  <script src="js/settings.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
